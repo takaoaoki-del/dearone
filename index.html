@@ -1,1 +1,278 @@
 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Amplitude × DearOne — Account Health Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+  :root{--bg:#0F172A;--bg2:#1E293B;--bg4:#0D1526;--border:#334155;--border2:#253352;--txt:#E2E8F0;--txt2:#94A3B8;--txt3:#64748B;--blue:#38BDF8;--green:#4ADE80;--red:#F87171;--amber:#FBBF24;--purple:#A78BFA;--radius:12px;--radius-sm:8px;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP','Inter',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;font-size:14px;line-height:1.6;}
+  .header{background:linear-gradient(135deg,#0f2d52 0%,#0F172A 60%);border-bottom:1px solid #1E3A5F55;padding:20px 40px;position:sticky;top:0;z-index:100;}
+  .header-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:14px;}
+  .logo-badge{background:#1D4ED8;color:#DBEAFE;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;white-space:nowrap;flex-shrink:0;}
+  .header-title{font-size:17px;font-weight:700;color:#F1F5F9;}
+  .header-sub{font-size:11px;color:var(--txt3);margin-top:2px;}
+  .header-date{margin-left:auto;font-size:11px;color:var(--txt3);background:var(--bg2);padding:4px 11px;border-radius:20px;border:1px solid var(--border);white-space:nowrap;}
+  .main{max-width:1280px;margin:0 auto;padding:24px 40px 60px;}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px;}
+  .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden;}
+  .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kc,var(--blue));}
+  .kpi-label{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+  .kpi-value{font-size:22px;font-weight:700;color:var(--kc,var(--blue));letter-spacing:-.03em;line-height:1;}
+  .kpi-sub{font-size:10px;color:var(--txt3);margin-top:4px;}
+  .toolbar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .toolbar-label{font-size:12px;color:var(--txt3);white-space:nowrap;}
+  .btn-group{display:flex;gap:5px;flex-wrap:wrap;}
+  .fbtn{padding:4px 13px;border-radius:20px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--txt2);font-family:inherit;transition:all .15s;white-space:nowrap;}
+  .fbtn:hover{border-color:#475569;color:var(--txt);}
+  .fbtn.ab{border-color:#3B82F6;background:#1D4ED8;color:#DBEAFE;}
+  .fbtn.at{border-color:#0E7490;background:#164E63;color:#CFFAFE;}
+  .sep{width:1px;height:18px;background:var(--border);margin:0 4px;}
+  /* Tooltip */
+  .tip{display:inline-flex;align-items:center;gap:4px;position:relative;}
+  .tip i{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:#334155;color:#94A3B8;font-size:9px;font-weight:700;cursor:default;flex-shrink:0;line-height:1;font-style:normal;border:1px solid #475569;}
+  .tip i:hover{background:#475569;color:#E2E8F0;}
+  .tip-box{display:none;position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1E293B;border:1px solid #475569;border-radius:8px;padding:10px 13px;width:220px;font-size:11px;color:#CBD5E1;line-height:1.6;font-weight:400;text-transform:none;letter-spacing:0;z-index:999;pointer-events:none;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+  .tip-box::before{content:'';position:absolute;bottom:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-bottom-color:#475569;}
+  .tip-box::after{content:'';position:absolute;bottom:calc(100% - 1px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-bottom-color:#1E293B;}
+  .tip:hover .tip-box{display:block;}
+  /* Table */
+  .tbl-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:24px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead tr{background:#0D1526;border-bottom:1px solid var(--border);}
+  th{padding:10px 12px;text-align:left;color:var(--txt3);font-weight:600;font-size:10px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+  td{padding:9px 12px;border-bottom:1px solid var(--border2);vertical-align:middle;}
+  tbody tr{cursor:pointer;transition:background .1s;}
+  tbody tr:hover td{background:#1a2540;}
+  tbody tr.selected td{background:#1D3557!important;}
+  tbody tr:last-child td{border-bottom:none;}
+  .badge{display:inline-block;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;white-space:nowrap;}
+  .b-red{background:#FEE2E2;color:#DC2626;} .b-yel{background:#FEF3C7;color:#D97706;} .b-grn{background:#DCFCE7;color:#16A34A;}
+  .acct-name{font-weight:600;color:#F1F5F9;font-size:13px;}
+  .util-wrap{display:flex;align-items:center;gap:5px;}
+  .util-bar{width:40px;height:4px;background:#334155;border-radius:2px;flex-shrink:0;}
+  .util-fill{height:100%;border-radius:2px;max-width:100%;}
+  .wau-cell{display:flex;align-items:center;gap:6px;}
+  .wau-num{font-weight:700;font-size:12px;min-width:22px;text-align:right;}
+  .wau-pct{font-size:10px;font-weight:600;min-width:38px;}
+  .prod-tags{display:flex;flex-wrap:wrap;gap:3px;}
+  .prod-tag{font-size:9px;padding:1px 5px;border-radius:4px;background:#0D1526;color:#94A3B8;border:1px solid #334155;white-space:nowrap;}
+  /* Detail */
+  .detail{background:var(--bg2);border-radius:var(--radius);border:1px solid var(--border);border-left:4px solid var(--dc,#38BDF8);padding:20px 24px;margin-bottom:20px;display:none;}
+  .detail.open{display:block;animation:sd .18s ease;}
+  @keyframes sd{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+  .d-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+  .d-title{font-size:18px;font-weight:700;color:#F1F5F9;}
+  .d-meta{font-size:11px;color:var(--txt3);margin-top:3px;}
+  .d-close{background:none;border:none;color:var(--txt3);font-size:20px;cursor:pointer;padding:0;line-height:1;}
+  .d-close:hover{color:var(--txt);}
+  .d-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+  .d-kpi{background:var(--bg4);border-radius:var(--radius-sm);padding:12px 14px;}
+  .d-kpi-l{font-size:10px;color:var(--txt3);margin-bottom:3px;}
+  .d-kpi-v{font-size:18px;font-weight:700;letter-spacing:-.02em;}
+  .d-kpi-sub{font-size:10px;color:var(--txt3);margin-top:2px;}
+  .wau-spark-wrap{display:flex;align-items:flex-end;gap:3px;height:28px;margin-top:6px;}
+  .d-insights{background:var(--bg4);border-radius:var(--radius-sm);padding:13px 16px;}
+  .d-ins-label{font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+  .ins-item{font-size:12px;color:#CBD5E1;padding:4px 0;border-bottom:1px solid #253352;line-height:1.6;}
+  .ins-item:last-child{border:none;padding-bottom:0;}
+  .footer{text-align:center;font-size:11px;color:var(--txt3);padding-top:14px;border-top:1px solid var(--border2);margin-top:8px;}
+  .confidential{text-align:center;font-size:11px;color:#475569;margin-top:6px;}
+  @media(max-width:1100px){.tbl-wrap{overflow-x:auto;}}
+  @media(max-width:900px){.header{padding:14px 20px;}.main{padding:16px 16px 48px;}.kpis{grid-template-columns:repeat(3,1fr);}.d-kpis{grid-template-columns:repeat(2,1fr);}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <span class="logo-badge">Amplitude &times; DearOne</span>
+    <div>
+      <div class="header-title">Account Health Dashboard</div>
+      <div class="header-sub">&#12450;&#12463;&#12486;&#12451;&#12502;&#12450;&#12459;&#12454;&#12531;&#12488; 26&#20214; &#8212; &#23450;&#26399;&#12504;&#12523;&#12473;&#12514;&#12491;&#12479;&#12522;&#12531;&#12464;</div>
+    </div>
+    <div class="header-date">&#128197; 2026-04-15 &#21462;&#24471;</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="kpis">
+    <div class="kpi" style="--kc:#38BDF8"><div class="kpi-label">&#32218; ARR</div><div class="kpi-value" id="k-arr">&#8212;</div><div class="kpi-sub">26&#20214;&#21512;&#35336;</div></div>
+    <div class="kpi" style="--kc:#F87171"><div class="kpi-label">&#128308; Red</div><div class="kpi-value" id="k-red">&#8212;</div><div class="kpi-sub">&#35201;&#23550;&#24540;</div></div>
+    <div class="kpi" style="--kc:#FBBF24"><div class="kpi-label">&#127265; Yellow</div><div class="kpi-value" id="k-yel">&#8212;</div><div class="kpi-sub">&#35201;&#27880;&#35222;</div></div>
+    <div class="kpi" style="--kc:#4ADE80"><div class="kpi-label">&#127266; Green</div><div class="kpi-value" id="k-grn">&#8212;</div><div class="kpi-sub">&#826f;&#22909;</div></div>
+    <div class="kpi" style="--kc:#A78BFA"><div class="kpi-label">WAU = 0</div><div class="kpi-value" id="k-w0">&#8212;</div><div class="kpi-sub">&#12450;&#12463;&#12486;&#12451;&#12502;&#12394;&#12375;</div></div>
+  </div>
+
+  <div class="toolbar">
+    <span class="toolbar-label">&#20581;&#20840;&#24615;:</span>
+    <div class="btn-group" id="hf">
+      <button class="fbtn ab" data-f="all"    onclick="sf('h',this)">&#12377;&#12409;&#12390;</button>
+      <button class="fbtn"    data-f="Red"    onclick="sf('h',this)">&#128308; Red</button>
+      <button class="fbtn"    data-f="Yellow" onclick="sf('h',this)">&#127265; Yellow</button>
+      <button class="fbtn"    data-f="Green"  onclick="sf('h',this)">&#127266; Green</button>
+    </div>
+    <div class="sep"></div>
+    <span class="toolbar-label">&#20006;&#26367;:</span>
+    <div class="btn-group" id="sb">
+      <button class="fbtn at" data-s="arr"  onclick="ss(this)">ARR</button>
+      <button class="fbtn"    data-s="date" onclick="ss(this)">&#26356;&#26032;&#26085;</button>
+      <button class="fbtn"    data-s="wau"  onclick="ss(this)">WAU</button>
+      <button class="fbtn"    data-s="util" onclick="ss(this)">&#21033;&#29992;&#29575;</button>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>&#20581;&#20840;&#24615;</th>
+        <th>&#12450;&#12459;&#12454;&#12531;&#12488;&#21517;</th>
+        <th><span class="tip">&#26356;&#26032;&#26085;<i>?</i><span class="tip-box">&#27425;&#22238;&#12398;&#22özyk&#32004;&#26356;&#26032;&#26399;&#26085;&#65288;SFDC&#65306;CloseDate&#65289;&#12290;&#26356;&#26032;&#21830;&#35882;&#12398;CloseDate&#12434;&#34920;&#31034;&#12290;</span></span></th>
+        <th><span class="tip">ATR<i>?</i><span class="tip-box">Available to Renew&#12290;&#26356;&#26032;&#12505;&#12540;&#12473;&#12398;ARR&#12290;&#25324;&#24373;&#12539;&#12481;&#12515;&#12540;&#12531;&#21069;&#12398;&#22951;&#32004;&#37329;&#39069;&#12290;</span></span></th>
+        <th><span class="tip">&#21033;&#29992;&#29575;<i>?</i><span class="tip-box">&#26399;&#26411;&#20104;&#27979;&#28040;&#21205;&#29575;&#65288;Projected_Vol_Usage_Current_Period&#65289;&#12290;50%&#26410;&#28181;&#12399;&#20302;&#27963;&#29992;&#12522;&#12473;&#12463;&#12290;90%&#36229;&#12399;&#36229;&#36027;&#28040;&#36027;&#12522;&#12473;&#12463;&#12290;</span></span></th>
+        <th><span class="tip">WAU &amp; 6W&#12488;&#12524;&#12531;&#12489;<i>?</i><span class="tip-box">Weekly Active Users&#65288;&#30452;&#36817;&#36�;&#65289;&#12290;&#12496;&#12540;&#12399;6&#36016;&#12488;&#12524;&#12531;&#12489;&#65288;&#24038;=6&#36016;&#21069;&#12289;&#21491;=&#30452;&#36817;&#65289;&#12290;%&#12399;6&#36016;&#21069;&#27604;&#22793;&#21270;&#29575;&#12290;</span></span></th>
+        <th>&#21033;&#29992;&#20013;&#35069;&#21697;</th>
+      </tr></thead>
+      <tbody id="tbl-body"></tbody>
+    </table>
+  </div>
+
+  <div class="detail" id="detail-panel">
+    <div class="d-header">
+      <div><div class="d-title" id="d-name"></div><div class="d-meta" id="d-meta"></div></div>
+      <button class="d-close" onclick="closeDetail()">&#10005;</button>
+    </div>
+    <div class="d-kpis">
+      <div class="d-kpi"><div class="d-kpi-l">ATR</div><div class="d-kpi-v" id="d-atr" style="color:#38BDF8"></div></div>
+      <div class="d-kpi"><div class="d-kpi-l">Churn / New ARR</div><div class="d-kpi-v" id="d-delta"></div></div>
+      <div class="d-kpi"><div class="d-kpi-l">&#21033;&#29992;&#29575;</div><div class="d-kpi-v" id="d-util"></div></div>
+      <div class="d-kpi">
+        <div class="d-kpi-l">WAU&#65288;6&#36016;&#12488;&#12524;&#12531;&#12489;&#65289;</div>
+        <div class="d-kpi-v" id="d-wau"></div>
+        <div class="d-kpi-sub" id="d-wpct"></div>
+        <div class="wau-spark-wrap" id="d-spark"></div>
+      </div>
+      <div class="d-kpi"><div class="d-kpi-l">&#26356;&#26032;&#26085;</div><div class="d-kpi-v" id="d-date" style="color:#94A3B8;font-size:15px"></div></div>
+    </div>
+    <div class="d-insights"><div class="d-ins-label">&#128203; &#12504;&#12523;&#12473;&#12452;&#12531;&#12469;&#12452;&#12488;</div><div id="d-ins"></div></div>
+  </div>
+
+  <div class="footer">&#12487;&#12540;&#12479;&#12477;&#12540;&#12473;: Salesforce Live &nbsp;|&nbsp; &#21033;&#29992;&#29575; = &#26399;&#26411;&#20104;&#27979;&#28040;&#21205;&#29575; &nbsp;|&nbsp; WAU = Weekly Active Users &nbsp;|&nbsp; &#20581;&#20840;&#24615; = Gainsight Overall Score &nbsp;|&nbsp; 2026-04-15 &#21462;&#24471;</div>
+  <div class="confidential">&#128274; &#26412;&#36039;&#26009;&#12399;Amplitude &times; DearOne&#38291;&#12398;&#27231;&#23494;&#24773;&#22577;&#12391;&#12377;&#12290;&#31532;&#19977;&#32773;&#12408;&#12398;&#20849;&#26377;&#12399;&#304A;&#25511;&#12360;&#12367;&#12384;&#12373;&#12356;&#12290;</div>
+</div>
+
+<script>
+const DATA=[
+  {n:"NTT DOCOMO",          o:"112014",arr:1315000,atr:1315000,newArr:105200,churn:0,      d:"2026-12-31",util:86.8, wau:203,w6:-6,  h:"Yellow",p:["Analytics","CDP","Web Exp","SR","PSP"]},
+  {n:"LIFULL",              o:"116793",arr:110000, atr:110000, newArr:36000, churn:0,      d:"2027-09-30",util:87.6, wau:119,w6:31,  h:"Yellow",p:["Analytics"]},
+  {n:"&#x826f;&#x54c1;&#x8a08;&#x753b; (MUJI)",o:"300298",arr:99144,  atr:99144,  newArr:0,     churn:-99144,d:"2026-08-20",util:114.7,wau:0,  w6:-100,h:"Red",   p:["Analytics"]},
+  {n:"Adastria",            o:"285084",arr:79820,  atr:79820,  newArr:0,     churn:0,      d:"2026-10-31",util:96.6, wau:15, w6:114, h:"Green", p:["Analytics"]},
+  {n:"Coconala",            o:"287494",arr:67392,  atr:67392,  newArr:5391,  churn:0,      d:"2026-08-07",util:56.6, wau:31, w6:29,  h:"Green", p:["Analytics"]},
+  {n:"GLOBIS",              o:"92108", arr:48530,  atr:48530,  newArr:0,     churn:0,      d:"2027-03-31",util:80.1, wau:13, w6:-19, h:"Green", p:["Analytics","G&S"]},
+  {n:"Omron",               o:"100892",arr:47000,  atr:47000,  newArr:3760,  churn:0,      d:"2026-12-01",util:117.7,wau:7,  w6:40,  h:"Green", p:["Analytics"]},
+  {n:"Golf Digest Online",  o:"134551",arr:45900,  atr:45900,  newArr:0,     churn:0,      d:"2027-12-01",util:51.6, wau:11, w6:-8,  h:"Yellow",p:["Analytics"]},
+  {n:"La Belle Vie",        o:"79321", arr:45900,  atr:45900,  newArr:3672,  churn:0,      d:"2026-12-01",util:92.5, wau:12, w6:0,   h:"Green", p:["Analytics"]},
+  {n:"RENAISSANCE",         o:"134541",arr:34560,  atr:34560,  newArr:2765,  churn:0,      d:"2027-03-01",util:72.9, wau:9,  w6:350, h:"Green", p:["Analytics"]},
+  {n:"Orbis",               o:"187541",arr:32400,  atr:32400,  newArr:2592,  churn:0,      d:"2027-10-31",util:42.1, wau:2,  w6:-33, h:"Red",   p:["Analytics"]},
+  {n:"Spacemarket",         o:"117087",arr:26957,  atr:26957,  newArr:2157,  churn:0,      d:"2027-04-20",util:91.5, wau:18, w6:0,   h:"Green", p:["Analytics","Other"]},
+  {n:"NAFCO",               o:"168324",arr:25000,  atr:25000,  newArr:2000,  churn:0,      d:"2026-12-01",util:65.9, wau:5,  w6:400, h:"Red",   p:["Analytics","Web Exp","SR"]},
+  {n:"GiftMall",            o:"147218",arr:25000,  atr:25000,  newArr:2000,  churn:0,      d:"2026-12-01",util:104.9,wau:9,  w6:125, h:"Green", p:["Analytics","Web Exp","SR"]},
+  {n:"Sotetsu Holdings",    o:"164339",arr:25000,  atr:25000,  newArr:2000,  churn:0,      d:"2026-12-01",util:61.1, wau:6,  w6:-40, h:"Yellow",p:["Analytics","Web Exp","SR"]},
+  {n:"g-foot",              o:"245796",arr:25000,  atr:25000,  newArr:2000,  churn:0,      d:"2026-12-01",util:75.7, wau:3,  w6:0,   h:"Red",   p:["Analytics","Web Exp","SR"]},
+  {n:"CREATE SD",           o:"126565",arr:17496,  atr:17496,  newArr:1400,  churn:0,      d:"2027-01-31",util:82.6, wau:2,  w6:-50, h:"Yellow",p:["Analytics","Other"]},
+  {n:"Sekisui House",       o:"201158",arr:16300,  atr:16300,  newArr:0,     churn:0,      d:"2027-03-01",util:4.4,  wau:2,  w6:-33, h:"Red",   p:["Analytics","Web Exp","SR"]},
+  {n:"i-plug",              o:"238017",arr:16300,  atr:16300,  newArr:6792,  churn:0,      d:"2027-03-01",util:82.4, wau:4,  w6:-33, h:"Yellow",p:["Analytics","Web Exp","SR"]},
+  {n:"Tokyo Dome",          o:"101587",arr:16200,  atr:16200,  newArr:1296,  churn:0,      d:"2027-01-31",util:44.8, wau:3,  w6:-25, h:"Red",   p:["Analytics"]},
+  {n:"Just Planning",       o:"108033",arr:16200,  atr:16200,  newArr:1296,  churn:0,      d:"2028-01-31",util:90.2, wau:5,  w6:-17, h:"Green", p:["Analytics"]},
+  {n:"Toyokumo",            o:"166487",arr:16200,  atr:16200,  newArr:1296,  churn:0,      d:"2028-03-31",util:42.1, wau:0,  w6:-100,h:"Red",   p:["Analytics"]},
+  {n:"StylingLife (PLAZA)", o:"93326", arr:11664,  atr:11664,  newArr:933,   churn:0,      d:"2026-09-18",util:127.4,wau:3,  w6:-40, h:"Green", p:["Analytics","Other"]},
+];
+
+const H={Red:{c:"b-red",i:"&#128308;",l:"Red",color:"#F87171"},Yellow:{c:"b-yel",i:"&#127265;",l:"Yellow",color:"#FBBF24"},Green:{c:"b-grn",i:"&#127266;",l:"Green",color:"#4ADE80"}};
+function fmt(n){return n==null?"&#8212;":"$"+Math.abs(Math.round(n)).toLocaleString();}
+function fD(d){return d?d.replace(/-/g,"/"):"&#8212;";}
+function uC(u){if(u<10)return"#F87171";if(u<25)return"#FB923C";if(u>130)return"#FBBF24";if(u>100)return"#A3E635";return"#4ADE80";}
+function wC(p){if(p==null)return"#64748B";if(p<=-50)return"#F87171";if(p<-15)return"#FBBF24";if(p>=20)return"#4ADE80";return"#38BDF8";}
+function spk(wau,pct){const e=wau??0,s=(pct!=null&&pct!==0)?e/(1+pct/100):e,b=[];for(let i=0;i<6;i++)b.push(Math.max(0,Math.round(s+(e-s)*(i/5))));return b;}
+
+document.getElementById("k-arr").textContent="$"+Math.round(DATA.reduce((s,d)=>s+d.arr,0)/1000)+"K";
+document.getElementById("k-red").textContent=DATA.filter(d=>d.h==="Red").length+"&#20214;";
+document.getElementById("k-yel").textContent=DATA.filter(d=>d.h==="Yellow").length+"&#20214;";
+document.getElementById("k-grn").textContent=DATA.filter(d=>d.h==="Green").length+"&#20214;";
+document.getElementById("k-w0").textContent=DATA.filter(d=>d.wau===0).length+"&#20214;";
+
+let hF="all",sK="arr",sel=null;
+
+function rows(){
+  return DATA.filter(d=>hF==="all"||d.h===hF).sort((a,b)=>{
+    if(sK==="arr")return b.arr-a.arr;
+    if(sK==="date")return(a.d||"").localeCompare(b.d||"");
+    if(sK==="wau")return(b.wau??-1)-(a.wau??-1);
+    if(sK==="util")return(b.util??-1)-(a.util??-1);
+    return 0;
+  });
+}
+
+function rt(){
+  document.getElementById("tbl-body").innerHTML=rows().map(d=>{
+    const h=H[d.h],uc=uC(d.util),wc=wC(d.w6),uw=Math.min(d.util??0,160)/160*100;
+    const bars=spk(d.wau,d.w6),mx=Math.max(...bars,1);
+    const sp=bars.map(v=>`<div style="width:4px;height:${Math.max(2,Math.round(v/mx*18))}px;background:${wc};border-radius:1px;flex-shrink:0"></div>`).join("");
+    const ps=d.w6!=null?(d.w6>=0?"+"+d.w6+"%":d.w6+"%"):"&#8212;";
+    return`<tr class="${sel===d.n?"selected":""}" onclick="td('${d.n.replace(/'/g,"\\'")}')">
+      <td><span class="badge ${h.c}">${h.i} ${h.l}</span></td>
+      <td><span class="acct-name">${d.n}</span><div style="font-size:10px;color:var(--txt3);margin-top:1px">Org: ${d.o}</div></td>
+      <td style="color:#94A3B8;white-space:nowrap">${fD(d.d)}</td>
+      <td style="color:#38BDF8;font-weight:600;white-space:nowrap">${fmt(d.atr)}</td>
+      <td><div class="util-wrap"><div class="util-bar"><div class="util-fill" style="width:${uw}%;background:${uc}"></div></div><span style="color:${uc};font-weight:600;font-size:11px">${d.util??0}%</span></div></td>
+      <td><div class="wau-cell"><div style="display:flex;align-items:flex-end;gap:2px;height:18px">${sp}</div><span class="wau-num" style="color:${wc}">${d.wau??0}</span><span class="wau-pct" style="color:${wc}">${ps}</span></div></td>
+      <td><div class="prod-tags">${d.p.map(x=>`<span class="prod-tag">${x}</span>`).join("")}</div></td>
+    </tr>`;
+  }).join("");
+}
+
+function td(name){
+  if(sel===name){closeDetail();return;}
+  sel=name;
+  const d=DATA.find(x=>x.n===name);
+  const h=H[d.h],wc=wC(d.w6);
+  document.getElementById("detail-panel").style.setProperty("--dc",h.color);
+  document.getElementById("d-name").textContent=d.n;
+  document.getElementById("d-meta").innerHTML=`Org ID: ${d.o} &nbsp;|&nbsp; ${d.p.join(", ")}`;
+  document.getElementById("d-atr").innerHTML=fmt(d.atr);
+  const de=document.getElementById("d-delta");
+  if(d.churn<0){de.innerHTML="&#9660;"+fmt(d.churn);de.style.color="#F87171";}
+  else if(d.newArr>0){de.innerHTML="&#9650;"+fmt(d.newArr);de.style.color="#4ADE80";}
+  else{de.innerHTML="&#8212;";de.style.color="#475569";}
+  const ue=document.getElementById("d-util");ue.textContent=d.util+"%";ue.style.color=uC(d.util);
+  const we=document.getElementById("d-wau");we.textContent=d.wau??0;we.style.color=wc;
+  const pe=document.getElementById("d-wpct");pe.textContent=d.w6!=null?(d.w6>=0?"6W: +"+d.w6+"%":"6W: "+d.w6+"%"):"6W: &#8212;";pe.style.color=wc;
+  const bars=spk(d.wau,d.w6),mx=Math.max(...bars,1);
+  document.getElementById("d-spark").innerHTML=bars.map(v=>`<div style="width:9px;height:${Math.max(2,Math.round(v/mx*28))}px;background:${wc};border-radius:2px;flex-shrink:0"></div>`).join("");
+  document.getElementById("d-date").textContent=fD(d.d).replace(/\//g,"-");
+  // Insights
+  const ins=[];
+  if(d.wau===0)ins.push("&#9888;&#65039; WAU=0: &#12450;&#12463;&#12486;&#12451;&#12502;&#12518;&#12540;&#12470;&#12540;&#12364;&#12356;&#12414;&#12379;&#12435;&#12290;&#21033;&#29992;&#29366;&#27841;&#12434;&#33267;&#24613;&#30906;&#35469;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;&#12290;");
+  if((d.util??0)<10&&d.arr>0)ins.push(`&#9888;&#65039; &#21033;&#29992;&#29575;${d.util}%: &#22951;&#32004;EV&#12364;&#12411;&#12392;&#12435;&#12393;&#28040;&#21205;&#12373;&#12428;&#12390;&#12356;&#12414;&#12379;&#12435;&#12290;&#27963;&#29992;&#25903;&#25588;&#12364;&#24517;&#35201;&#12391;&#12377;&#12290;`);
+  if((d.util??0)>120)ins.push(`&#128200; &#21033;&#29992;&#29575;${d.util}%: &#22951;&#32004;&#19978;&#38480;&#12434;&#36229;&#36027;&#12377;&#12427;&#35211;&#36796;&#12415;&#12391;&#12377;&#12290;&#12503;&#12521;&#12531;&#12450;&#12483;&#12503;&#12464;&#12524;&#12540;&#12489;&#12434;&#26908;&#35611;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;&#12290;`);
+  if(d.w6!=null&&d.w6<=-50&&(d.wau??0)>0)ins.push(`&#128201; WAU 6&#36016;&#38291;&#12391;${d.w6}%&#28187;&#23569;: &#21033;&#29992;&#12364;&#22823;&#12365;&#12367;&#32048;&#12387;&#12390;&#12356;&#12414;&#12377;&#12290;`);
+  if(d.w6!=null&&d.w6>=100)ins.push(`&#128640; WAU 6&#36016;&#38291;&#12391;+${d.w6}%&#22793;&#21270;: &#27963;&#29992;&#12364;&#20341;&#12403;&#12390;&#12356;&#12414;&#12377;&#65281;`);
+  if(d.churn<0)ins.push(`&#128308; &#12481;&#12515;&#12540;&#12531;&#12522;&#12473;&#12463;: ${fmt(d.churn)}&#12398;&#35299;&#32004;&#35211;&#36796;&#12415;&#12364;&#12354;&#12426;&#12414;&#12377;&#12290;`);
+  if(ins.length===0)ins.push("&#9989; &#29694;&#26178;&#28857;&#12391;&#29305;&#35352;&#20107;&#39154;&#12399;&#12354;&#12426;&#12414;&#12379;&#12435;&#12290;&#24341;&#12365;&#32396;&#12365;&#12514;&#12491;&#12479;&#12522;&#12531;&#12464;&#12434;&#32321;&#32368;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;&#12290;");
+  document.getElementById("d-ins").innerHTML=ins.map(t=>`<div class="ins-item">${t}</div>`).join("");
+  document.getElementById("detail-panel").classList.add("open");
+  rt();
+  document.getElementById("detail-panel").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+function closeDetail(){sel=null;document.getElementById("detail-panel").classList.remove("open");rt();}
+function sf(type,btn){document.querySelectorAll("#hf .fbtn").forEach(b=>b.classList.remove("ab"));btn.classList.add("ab");hF=btn.dataset.f;sel=null;document.getElementById("detail-panel").classList.remove("open");rt();}
+function ss(btn){document.querySelectorAll("#sb .fbtn").forEach(b=>b.classList.remove("at"));btn.classList.add("at");sK=btn.dataset.s;rt();}
+rt();
+</script>
+</body>
+</html>
